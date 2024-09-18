@@ -36,6 +36,16 @@ export const GET = async (request:NextRequest) => {
   //   { status: 400 }
   // );
 
+  if((studentId !== null && courseNo !== null) || (studentId === null && courseNo === null)){
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Please provide either studentId or courseNo and not both!",
+      },
+      { status: 400 }
+    );
+  }
+
   //get all courses enrolled by a student
   if (studentId) {
     const courseNoList = [];
@@ -60,10 +70,19 @@ export const GET = async (request:NextRequest) => {
     const studentIdList = [];
     for (const enroll of DB.enrollments) {
       //your code here
+      if(enroll.courseNo === courseNo) {
+        studentIdList.push(enroll.studentId);
+      }
     }
 
     const students:Student[] = [];
     //your code here
+    for (const std of studentIdList){
+      const foundStd = DB.students.find((s) => s.studentId === std);
+      if (foundStd) {
+        students.push(foundStd);
+      }
+    }
 
     return NextResponse.json({
       ok: true,
@@ -149,8 +168,20 @@ export const DELETE = async (request:NextRequest) => {
   //   },
   //   { status: 404 }
   // );
+  const foundStudent = DB.enrollments.find((s)=>s.studentId === studentId);
+  const foundCourse = DB.enrollments.find((c)=>c.courseNo === courseNo);
+  if (!foundStudent || !foundCourse) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Enrollment does not exist",
+      },
+      { status: 404 }
+    );
+  }
 
   //perform deletion by using splice or array filter
+  DB.enrollments = DB.enrollments.filter((enroll) => enroll.courseNo !== courseNo);
 
   //if code reach here it means deletion is complete
   return NextResponse.json({
